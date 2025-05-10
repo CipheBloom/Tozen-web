@@ -2,6 +2,7 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useUser } from '@/context/UserContext';
+import Image from 'next/image';
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
@@ -61,13 +62,15 @@ export default function ProfilePage() {
             className="w-full border-2 border-black rounded-md p-2 mt-1"
             value={image}
             onChange={e => setImage(e.target.value)}
-            placeholder="https://example.com/your-image.jpg"
+            placeholder="https://cdn.staticneo.com/w/naruto/Nprofile2.jpg"
           />
         </label>
         {image && (
-          <img
+          <Image
             src={image}
             alt="Profile Preview"
+            width={96}
+            height={96}
             className="w-24 h-24 rounded-full border-2 border-black mx-auto"
           />
         )}
@@ -104,4 +107,4 @@ export default function ProfilePage() {
       </form>
     </div>
   );
-}
+} 
