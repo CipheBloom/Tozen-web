@@ -6,7 +6,6 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import NextAuthSessionProvider from './SessionProvider';
 import SignInPage from './auth/signin/page';
 import { UserProvider, useUser } from '@/context/UserContext';
-import Image from 'next/image';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   // About modal state

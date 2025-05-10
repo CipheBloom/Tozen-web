@@ -2,7 +2,6 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useUser } from '@/context/UserContext';
-import Image from 'next/image';
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
