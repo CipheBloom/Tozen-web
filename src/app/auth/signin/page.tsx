@@ -45,7 +45,7 @@ export default function SignInPage() {
         </button>
       </div>
       <footer className="text-black/60 text-sm mt-8">
-        &copy; {new Date().getFullYear()} tozen. Your daily movement, made mindful.
+        &copy; 2024-{new Date().getFullYear()} tozen. Your daily movement, made mindful.
       </footer>
     </div>
   );
