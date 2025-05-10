@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   const date = url.searchParams.get("date"); // YYYY-MM-DD
   const client = await clientPromise;
   const db = client.db();
-  const query: Record<string, any> = { userId: session.user.email };
+  const query: Record<string, unknown> = { userId: session.user.email };
   if (date) query.date = date;
   const workouts = await db.collection("workouts").find(query).toArray();
   return new Response(JSON.stringify(workouts), { status: 200, headers: { "Content-Type": "application/json" } });
