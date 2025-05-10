@@ -62,7 +62,7 @@ export default function ProfilePage() {
             className="w-full border-2 border-black rounded-md p-2 mt-1"
             value={image}
             onChange={e => setImage(e.target.value)}
-            placeholder="https://example.com/your-image.jpg"
+            placeholder="https://cdn.staticneo.com/w/naruto/Nprofile2.jpg"
           />
         </label>
         {image && (
