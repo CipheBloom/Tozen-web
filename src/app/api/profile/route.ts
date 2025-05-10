@@ -30,7 +30,7 @@ export async function GET(req: Request) {
   return new Response(JSON.stringify(user), { status: 200, headers: { "Content-Type": "application/json" } });
 }
 
-export async function DELETE(_req: Request) {
+export async function DELETE() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return new Response("Unauthorized", { status: 401 });

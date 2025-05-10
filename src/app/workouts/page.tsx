@@ -83,7 +83,8 @@ export default function WorkoutsPage() {
   const workoutDays = new Set(workouts.map(w => w.date));
 
   // Calendar onChange handler
-  const handleCalendarChange = (value: Date | Date[]) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleCalendarChange = (value: any, event?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     if (value instanceof Date) {
       setSelectedDate(value);
     } else if (Array.isArray(value) && value[0] instanceof Date) {
@@ -97,15 +98,14 @@ export default function WorkoutsPage() {
   };
 
   // Log workout modal handlers
-  const openLogModal = () => setShowLogModal(true);
   const closeLogModal = () => {
     setShowLogModal(false);
     setLogForm({ exerciseId: '', sets: '', reps: '', weight: '' });
   };
-  const handleLogChange = (e: any) => {
+  const handleLogChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLogForm(f => ({ ...f, [e.target.name]: e.target.value }));
   };
-  const handleLogSubmit = async (e: any) => {
+  const handleLogSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await fetch('/api/workouts', {
       method: 'POST',
@@ -127,15 +127,14 @@ export default function WorkoutsPage() {
   };
 
   // Add Exercise modal handlers
-  const openAddExercise = () => setShowAddExercise(true);
   const closeAddExercise = () => {
     setShowAddExercise(false);
     setAddExerciseForm({ name: '', category: '', notes: '' });
   };
-  const handleAddExerciseChange = (e: any) => {
+  const handleAddExerciseChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setAddExerciseForm(f => ({ ...f, [e.target.name]: e.target.value }));
   };
-  const handleAddExerciseSubmit = async (e: any) => {
+  const handleAddExerciseSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await fetch('/api/exercises', {
       method: 'POST',
@@ -157,10 +156,10 @@ export default function WorkoutsPage() {
     setShowEditWorkout(false);
     setEditWorkout(null);
   };
-  const handleEditWorkoutChange = (e: any) => {
+  const handleEditWorkoutChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setEditWorkout((w) => w ? { ...w, [e.target.name]: e.target.value } : w);
   };
-  const handleEditWorkoutSubmit = async (e: any) => {
+  const handleEditWorkoutSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editWorkout) return;
     await fetch('/api/workouts', {
@@ -235,10 +234,10 @@ export default function WorkoutsPage() {
     setShowEditExercise(false);
     setEditExercise(null);
   };
-  const handleEditExerciseChange = (e: any) => {
+  const handleEditExerciseChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setEditExercise((ex) => ex ? { ...ex, [e.target.name]: e.target.value } : ex);
   };
-  const handleEditExerciseSubmit = async (e: any) => {
+  const handleEditExerciseSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editExercise) return;
     await fetch('/api/exercises', {
@@ -296,7 +295,7 @@ export default function WorkoutsPage() {
           <h2 className="text-2xl font-extrabold mb-4 tracking-tight">Workout Calendar</h2>
           <div className="flex flex-col md:flex-row gap-8 items-start">
             <Calendar
-              onChange={handleCalendarChange as any}
+              onChange={handleCalendarChange}
               value={selectedDate}
               className="border-2 border-black rounded-lg shadow-brutal"
               tileClassName={({ date }) =>

@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/authOptions";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from 'mongodb';
 
-export async function GET(_req: Request) {
+export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) return new Response("Unauthorized", { status: 401 });
   const client = await clientPromise;
