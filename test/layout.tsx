@@ -6,7 +6,6 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import NextAuthSessionProvider from './SessionProvider';
 import SignInPage from './auth/signin/page';
 import { UserProvider, useUser } from '@/context/UserContext';
-import Image from 'next/image';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   // About modal state
@@ -18,7 +17,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <NextAuthSessionProvider>
           <UserProvider>
             <AuthGate>
-              <Header />
+              <Header setShowAbout={setShowAbout} />
               <nav className="flex justify-center gap-4 py-4 bg-yellow-200 border-b-2 border-black shadow-brutal">
                 <Link href="/workouts" className="px-4 py-2 rounded-md border-2 border-black bg-white font-bold hover:bg-yellow-300 shadow-brutal">WORKOUTS</Link>
                 <Link href="/todo" className="px-4 py-2 rounded-md border-2 border-black bg-white font-bold hover:bg-yellow-300 shadow-brutal">TODO</Link>
@@ -76,7 +75,7 @@ function AuthGate({ children }: { children: ReactNode }) {
 }
 
 // Move the header into its own client component so it can use useUser
-function Header() {
+function Header({ setShowAbout }: { setShowAbout: (value: boolean) => void }) {
   const { status } = useSession();
   const { user } = useUser();
 
@@ -89,17 +88,16 @@ function Header() {
       <div className="flex items-center gap-2">
         {status === 'loading' ? null : user ? (
           <>
-            {user.image && (
-              <Link href="/profile">
-                <Image
-                  src={user.image || '/default-image.jpg'}
-                  alt={user.name || 'User'}
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 rounded-full border-2 border-black shadow-brutal cursor-pointer"
-                />
-              </Link>
-            )}
+            <Link href="/profile">
+              <img
+                src={user.selectedImage && user.selectedImage.trim() !== '' ? user.selectedImage : '/default-image.jpg'}
+                alt={user.name && user.name.trim() !== '' ? user.name : 'User'}
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded-full border-2 border-black shadow-brutal cursor-pointer"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/default-image.jpg'; }}
+              />
+            </Link>
             <Link href="/profile">
               <span className="font-bold text-black mx-2 cursor-pointer">
                 {user.name}
