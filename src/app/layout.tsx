@@ -6,6 +6,7 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import NextAuthSessionProvider from './SessionProvider';
 import SignInPage from './auth/signin/page';
 import { UserProvider, useUser } from '@/context/UserContext';
+import Image from 'next/image';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   // About modal state
@@ -90,9 +91,11 @@ function Header({ showAbout, setShowAbout }: { showAbout: boolean, setShowAbout:
           <>
             {user.image && (
               <Link href="/profile">
-                <img
+                <Image
                   src={user.image}
                   alt={user.name || 'User'}
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full border-2 border-black shadow-brutal cursor-pointer"
                 />
               </Link>

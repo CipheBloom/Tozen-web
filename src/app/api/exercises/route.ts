@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import clientPromise from "@/lib/mongodb";
+import { ObjectId } from 'mongodb';
 
 export async function GET(_req: Request) {
   const session = await getServerSession(authOptions);
@@ -34,7 +35,7 @@ export async function PUT(req: Request) {
   const client = await clientPromise;
   const db = client.db();
   await db.collection("exercises").updateOne(
-    { _id: new (import('mongodb').ObjectId)(_id), userId: session.user.email },
+    { _id: new ObjectId(_id), userId: session.user.email },
     { $set: { name, category, notes } }
   );
   return new Response("OK", { status: 200 });
@@ -46,6 +47,6 @@ export async function DELETE(req: Request) {
   const { _id } = await req.json();
   const client = await clientPromise;
   const db = client.db();
-  await db.collection("exercises").deleteOne({ _id: new (require('mongodb').ObjectId)(_id), userId: session.user.email });
+  await db.collection("exercises").deleteOne({ _id: new ObjectId(_id), userId: session.user.email });
   return new Response("OK", { status: 200 });
 } 

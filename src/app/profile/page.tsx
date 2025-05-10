@@ -2,6 +2,7 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useUser } from '@/context/UserContext';
+import Image from 'next/image';
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
@@ -65,9 +66,11 @@ export default function ProfilePage() {
           />
         </label>
         {image && (
-          <img
+          <Image
             src={image}
             alt="Profile Preview"
+            width={96}
+            height={96}
             className="w-24 h-24 rounded-full border-2 border-black mx-auto"
           />
         )}

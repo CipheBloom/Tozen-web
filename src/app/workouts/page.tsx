@@ -6,6 +6,21 @@ import 'react-calendar/dist/Calendar.css';
 
 // NOTE: Run `npm install react-calendar` if not already installed.
 
+type Workout = {
+  _id: string;
+  date: string;
+  exerciseId: string;
+  sets: number;
+  reps: number;
+  weight: number;
+};
+type Exercise = {
+  _id: string;
+  name: string;
+  category: string;
+  notes?: string;
+};
+
 function getMonthRange(date: Date): [Date, Date] {
   const start = new Date(date.getFullYear(), date.getMonth(), 1);
   const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -15,8 +30,8 @@ function getMonthRange(date: Date): [Date, Date] {
 export default function WorkoutsPage() {
   const [tab, setTab] = useState<'calendar' | 'exercises'>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [workouts, setWorkouts] = useState<any[]>([]);
-  const [exercises, setExercises] = useState<any[]>([]);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
   const [logForm, setLogForm] = useState({ exerciseId: '', sets: '', reps: '', weight: '' });
@@ -24,11 +39,11 @@ export default function WorkoutsPage() {
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [addExerciseForm, setAddExerciseForm] = useState({ name: '', category: '', notes: '' });
   const [showEditWorkout, setShowEditWorkout] = useState(false);
-  const [editWorkout, setEditWorkout] = useState<any>(null);
+  const [editWorkout, setEditWorkout] = useState<Workout | null>(null);
   const [showEditExercise, setShowEditExercise] = useState(false);
-  const [editExercise, setEditExercise] = useState<any>(null);
-  const [pendingDeleteExercise, setPendingDeleteExercise] = useState<any>(null);
-  const [pendingDeleteWorkout, setPendingDeleteWorkout] = useState<any>(null);
+  const [editExercise, setEditExercise] = useState<Exercise | null>(null);
+  const [pendingDeleteExercise, setPendingDeleteExercise] = useState<Exercise | null>(null);
+  const [pendingDeleteWorkout, setPendingDeleteWorkout] = useState<Workout | null>(null);
 
   // Fetch workouts for the visible month
   useEffect(() => {
@@ -134,7 +149,7 @@ export default function WorkoutsPage() {
   };
 
   // Edit workout modal handlers
-  const openEditWorkout = (workout: any) => {
+  const openEditWorkout = (workout: Workout) => {
     setEditWorkout({ ...workout });
     setShowEditWorkout(true);
   };
@@ -143,10 +158,11 @@ export default function WorkoutsPage() {
     setEditWorkout(null);
   };
   const handleEditWorkoutChange = (e: any) => {
-    setEditWorkout((w: any) => ({ ...w, [e.target.name]: e.target.value }));
+    setEditWorkout((w) => w ? { ...w, [e.target.name]: e.target.value } : w);
   };
   const handleEditWorkoutSubmit = async (e: any) => {
     e.preventDefault();
+    if (!editWorkout) return;
     await fetch('/api/workouts', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -166,7 +182,7 @@ export default function WorkoutsPage() {
     const res = await fetch(`/api/workouts?start=${start}&end=${end}`);
     if (res.ok) setWorkouts(await res.json());
   };
-  const handleDeleteWorkout = (workout: any) => {
+  const handleDeleteWorkout = (workout: Workout) => {
     setPendingDeleteWorkout(workout);
   };
   const confirmDeleteWorkout = async () => {
@@ -190,7 +206,7 @@ export default function WorkoutsPage() {
     setShowLogModal(true);
   };
   // Group exercises by category
-  const exercisesByCategory = exercises.reduce((acc: Record<string, any[]>, ex: any) => {
+  const exercisesByCategory = exercises.reduce((acc: Record<string, Exercise[]>, ex: Exercise) => {
     acc[ex.category] = acc[ex.category] || [];
     acc[ex.category].push(ex);
     return acc;
@@ -211,7 +227,7 @@ export default function WorkoutsPage() {
   })();
 
   // Edit exercise modal handlers
-  const openEditExercise = (exercise: any) => {
+  const openEditExercise = (exercise: Exercise) => {
     setEditExercise({ ...exercise });
     setShowEditExercise(true);
   };
@@ -220,10 +236,11 @@ export default function WorkoutsPage() {
     setEditExercise(null);
   };
   const handleEditExerciseChange = (e: any) => {
-    setEditExercise((ex: any) => ({ ...ex, [e.target.name]: e.target.value }));
+    setEditExercise((ex) => ex ? { ...ex, [e.target.name]: e.target.value } : ex);
   };
   const handleEditExerciseSubmit = async (e: any) => {
     e.preventDefault();
+    if (!editExercise) return;
     await fetch('/api/exercises', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -239,16 +256,15 @@ export default function WorkoutsPage() {
     const res = await fetch('/api/exercises');
     if (res.ok) setExercises(await res.json());
   };
-  const handleDeleteExercise = (exercise: any) => {
+  const handleDeleteExercise = (exercise: Exercise) => {
     setPendingDeleteExercise(exercise);
   };
   const confirmDeleteExercise = async () => {
     if (!pendingDeleteExercise) return;
-    const id = typeof pendingDeleteExercise._id === 'object' && pendingDeleteExercise._id.$oid ? pendingDeleteExercise._id.$oid : pendingDeleteExercise._id;
     await fetch('/api/exercises', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ _id: id }),
+      body: JSON.stringify({ _id: pendingDeleteExercise._id }),
     });
     setPendingDeleteExercise(null);
     // Refetch exercises
@@ -343,7 +359,7 @@ export default function WorkoutsPage() {
                       required
                     >
                       <option value="">Select exercise</option>
-                      {exercises.map((ex: any) => (
+                      {exercises.map((ex: Exercise) => (
                         <option key={ex._id} value={ex._id}>{ex.name}</option>
                       ))}
                     </select>
@@ -444,7 +460,7 @@ export default function WorkoutsPage() {
                 <div key={category} className="border-2 border-black rounded-lg p-4 bg-white shadow-brutal">
                   <h3 className="font-bold mb-2">{category}</h3>
                   <ul className="flex flex-col gap-2">
-                    {exs.map((ex: any) => (
+                    {exs.map((ex: Exercise) => (
                       <li key={ex._id} className="flex items-center justify-between gap-2">
                         <span>{ex.name}</span>
                         <div className="flex gap-1">
