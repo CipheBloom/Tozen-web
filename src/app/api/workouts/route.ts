@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import clientPromise from "@/lib/mongodb";
+import { ObjectId } from 'mongodb';
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -9,7 +10,7 @@ export async function GET(req: Request) {
   const date = url.searchParams.get("date"); // YYYY-MM-DD
   const client = await clientPromise;
   const db = client.db();
-  const query: unknown = { userId: session.user.email };
+  const query: Record<string, any> = { userId: session.user.email };
   if (date) query.date = date;
   const workouts = await db.collection("workouts").find(query).toArray();
   return new Response(JSON.stringify(workouts), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -39,6 +40,6 @@ export async function DELETE(req: Request) {
   const { _id } = await req.json();
   const client = await clientPromise;
   const db = client.db();
-  await db.collection("workouts").deleteOne({ _id: new (import('mongodb').ObjectId)(_id), userId: session.user.email });
+  await db.collection("workouts").deleteOne({ _id: new ObjectId(_id), userId: session.user.email });
   return new Response("OK", { status: 200 });
 } 
