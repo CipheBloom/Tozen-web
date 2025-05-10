@@ -4,8 +4,9 @@ import { useSession } from "next-auth/react";
 
 type User = {
   name: string;
-  image: string;
   email: string;
+  images: string[];
+  selectedImage: string;
 };
 
 type UserContextType = {
@@ -28,14 +29,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const dbUser = await res.json();
       setUser({
         name: dbUser.name || session.user.name,
-        image: dbUser.image || session.user.image,
         email: dbUser.email,
+        images: dbUser.images || [],
+        selectedImage: dbUser.selectedImage || '',
       });
     } else {
       setUser({
         name: session.user.name || "",
-        image: session.user.image || "",
         email: session.user.email || "",
+        images: [],
+        selectedImage: '',
       });
     }
   };

@@ -7,13 +7,36 @@ export async function POST(req: Request) {
   if (!session?.user?.email) {
     return new Response("Unauthorized", { status: 401 });
   }
-  const { name, image } = await req.json();
+  const { action, image, name } = await req.json();
   const client = await clientPromise;
   const db = client.db();
+  const user = await db.collection("users").findOne({ email: session.user.email });
+
+  // Ensure images array exists
+  let images: string[] = Array.isArray(user?.images) ? user.images : [];
+  let selectedImage = user?.selectedImage || '';
+
+  if (action === 'add' && image) {
+    if (!images.includes(image)) images.push(image);
+    selectedImage = image; // auto-select new
+  } else if (action === 'delete' && image) {
+    images = images.filter((img) => img !== image);
+    if (selectedImage === image) selectedImage = images[0] || '';
+  } else if (action === 'select' && image) {
+    if (images.includes(image)) selectedImage = image;
+  } else if (action === 'updateName' && name) {
+    // Optional: update name
+    await db.collection("users").updateOne(
+      { email: session.user.email },
+      { $set: { name } }
+    );
+  }
+
   await db.collection("users").updateOne(
     { email: session.user.email },
-    { $set: { name, image } }
+    { $set: { images, selectedImage } }
   );
+
   // Fetch and return the updated user
   const updatedUser = await db.collection("users").findOne({ email: session.user.email });
   return new Response(JSON.stringify(updatedUser), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -27,7 +50,9 @@ export async function GET(req: Request) {
   const db = client.db();
   const user = await db.collection("users").findOne({ email });
   if (!user) return new Response("Not found", { status: 404 });
-  return new Response(JSON.stringify(user), { status: 200, headers: { "Content-Type": "application/json" } });
+  // Only return images and selectedImage, plus name/email
+  const { images = [], selectedImage = '', name = '', email: userEmail = '' } = user;
+  return new Response(JSON.stringify({ images, selectedImage, name, email: userEmail }), { status: 200, headers: { "Content-Type": "application/json" } });
 }
 
 export async function DELETE() {

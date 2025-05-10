@@ -2,6 +2,7 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useUser } from '@/context/UserContext';
+import Image from 'next/image';
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
@@ -15,7 +16,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       setName(user.name || "");
-      setImage(user.image || "");
+      setImage(user.selectedImage || "");
     }
   }, [user]);
 
@@ -29,7 +30,7 @@ export default function ProfilePage() {
     const res = await fetch("/api/profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, image }),
+      body: JSON.stringify({ action: "updateName", name }),
     });
     if (res.ok) {
       setMessage("Profile updated!");
@@ -40,6 +41,66 @@ export default function ProfilePage() {
     }
     setSaving(false);
   };
+
+  // Add new image
+  const handleAddImage = async () => {
+    if (!image.trim()) return;
+    setSaving(true);
+    setMessage("");
+    const res = await fetch("/api/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "add", image }),
+    });
+    if (res.ok) {
+      setMessage("Image added!");
+      setImage("");
+      await refreshUser();
+      update();
+    } else {
+      setMessage("Failed to add image.");
+    }
+    setSaving(false);
+  };
+
+  // Delete image
+  const handleDeleteImage = async (img: string) => {
+    setSaving(true);
+    setMessage("");
+    const res = await fetch("/api/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", image: img }),
+    });
+    if (res.ok) {
+      setMessage("Image deleted!");
+      await refreshUser();
+      update();
+    } else {
+      setMessage("Failed to delete image.");
+    }
+    setSaving(false);
+  };
+
+  // Select image
+  const handleSelectImage = async (img: string) => {
+    setSaving(true);
+    setMessage("");
+    const res = await fetch("/api/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "select", image: img }),
+    });
+    if (res.ok) {
+      setMessage("Profile image selected!");
+      await refreshUser();
+      update();
+    } else {
+      setMessage("Failed to select image.");
+    }
+    setSaving(false);
+  };
+
 
   return (
     <div className="max-w-md mx-auto mt-10 bg-white border-2 border-black rounded-md p-8 shadow-brutal">
@@ -55,21 +116,58 @@ export default function ProfilePage() {
           />
         </label>
         <label>
-          Profile Image URL:
-          <input
-            type="url"
-            className="w-full border-2 border-black rounded-md p-2 mt-1"
-            value={image}
-            onChange={e => setImage(e.target.value)}
-            placeholder="https://example.com/your-image.jpg"
-          />
+          Add Image URL:
+          <div className="flex gap-2 mt-1">
+            <input
+              type="url"
+              className="flex-1 border-2 border-black rounded-md p-2"
+              value={image}
+              onChange={e => setImage(e.target.value)}
+              placeholder="https://cdn.staticneo.com/w/naruto/Nprofile2.jpg"
+              disabled={saving}
+            />
+            <button
+              type="button"
+              className="px-3 py-2 border-2 border-black rounded-md bg-green-300 font-bold shadow-brutal hover:bg-green-400"
+              onClick={handleAddImage}
+              disabled={saving || !image.trim()}
+            >
+              Add
+            </button>
+          </div>
         </label>
-        {image && (
-          <img
-            src={image}
-            alt="Profile Preview"
-            className="w-24 h-24 rounded-full border-2 border-black mx-auto"
-          />
+        {user && user.images && user.images.length > 0 && (
+          <div className="grid grid-cols-3 gap-4 my-4">
+            {user.images.map((img, idx) => (
+              <div
+                key={img}
+                className={`relative border-2 rounded-md p-1 flex flex-col items-center ${user.selectedImage === img ? 'border-yellow-500 bg-yellow-100' : 'border-black bg-white'}`}
+              >
+                <img
+                  src={img}
+                  alt={`Profile ${idx + 1}`}
+                  width={64}
+                  height={64}
+                  className="w-16 h-16 rounded-full border mb-1 cursor-pointer"
+                  style={{ borderColor: user.selectedImage === img ? '#f59e42' : '#000' }}
+                  onClick={() => handleSelectImage(img)}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/default-image.jpg'; }}
+                />
+                {user.selectedImage === img && (
+                  <span className="text-xs font-bold text-yellow-700">Selected</span>
+                )}
+                <button
+                  type="button"
+                  className="absolute top-1 right-1 px-2 py-0.5 text-xs bg-red-500 text-white rounded hover:bg-red-700"
+                  onClick={() => handleDeleteImage(img)}
+                  disabled={saving}
+                  title="Delete image"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
         )}
         <button
           type="submit"
@@ -104,4 +202,4 @@ export default function ProfilePage() {
       </form>
     </div>
   );
-}
+} 
