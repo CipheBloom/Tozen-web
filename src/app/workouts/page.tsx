@@ -84,7 +84,7 @@ export default function WorkoutsPage() {
 
   // Calendar onChange handler
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleCalendarChange = (value: any, event?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+  const handleCalendarChange = (value: any) => {
     if (value instanceof Date) {
       setSelectedDate(value);
     } else if (Array.isArray(value) && value[0] instanceof Date) {
