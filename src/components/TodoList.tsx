@@ -134,7 +134,7 @@ export default function TodoList() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <FiCheckCircle className="text-gray-900 mr-2" size={24} />
-            <h2 className="text-xl font-extrabold">Today's Tasks</h2>
+            <h2 className="text-2xl font-bold mb-4">Today&apos;s Tasks</h2>
           </div>
           <div className="px-3 py-1 bg-white border-2 border-black rounded-full text-sm font-bold shadow-brutal-sm">
             {completedCount}/{totalCount}

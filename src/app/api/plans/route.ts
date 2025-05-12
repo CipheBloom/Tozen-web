@@ -9,7 +9,7 @@ await connectToDB();
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions as any) as { user?: { email?: string | null } } | null;
+    const session = await getServerSession(authOptions) as { user?: { email?: string | null } } | null;
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: 'Not authenticated' },
@@ -43,7 +43,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions as any) as { user?: { email?: string | null } } | null;
+    const session = await getServerSession(authOptions) as { user?: { email?: string | null } } | null;
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: 'Not authenticated' },
