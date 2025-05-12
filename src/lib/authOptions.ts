@@ -3,6 +3,7 @@ import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import clientPromise from './mongodb';
 import type { Session } from 'next-auth/next';
 import type { JWT } from 'next-auth/jwt';
+import type { AdapterUser } from 'next-auth/adapters';
 
 const JWT_STRATEGY = "jwt" as const;
 
@@ -22,11 +23,11 @@ export const authOptions = {
     signIn: '/auth/signin',
   },
   callbacks: {
-    async session({ session, token }: { session: Session; token: JWT }) {
-      if (session?.user) {
-        (session.user as Record<string, unknown>).id = (token && 'sub' in token && typeof token.sub === 'string' ? token.sub : '');
+    async session(params: { session: Session; token: any; user: any; newSession?: any; trigger?: "update" }): Promise<Session> {
+      if (params.session?.user) {
+        (params.session.user as Record<string, unknown>).id = (params.token && 'sub' in params.token && typeof params.token.sub === 'string' ? params.token.sub : '');
       }
-      return session;
+      return params.session;
     },
   },
 };
