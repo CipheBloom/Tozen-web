@@ -14,7 +14,7 @@ export const authOptions = {
   ],
   adapter: MongoDBAdapter(clientPromise),
   session: {
-    strategy: "jwt",
+    strategy: 'jwt' as any,
     },
   pages: {
     signIn: '/auth/signin',
