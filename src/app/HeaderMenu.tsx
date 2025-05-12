@@ -1,5 +1,6 @@
 "use client";
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useUser } from '@/context/UserContext';
 import { useState } from 'react';
@@ -31,7 +32,7 @@ export default function HeaderMenu({ setShowAbout }: { setShowAbout: (v: boolean
         ) : user ? (
           <>
             <Link href="/profile">
-              <img
+              <Image
                 src={user.selectedImage && user.selectedImage.trim() !== '' ? user.selectedImage : '/default-image.jpg'}
                 alt={user.name && user.name.trim() !== '' ? user.name : 'User'}
                 width={32}
@@ -75,7 +76,7 @@ export default function HeaderMenu({ setShowAbout }: { setShowAbout: (v: boolean
           ) : user ? (
             <>
               <Link href="/profile" className="flex items-center gap-2 px-2 py-2 hover:bg-yellow-100 rounded">
-                <img
+                <Image
                   src={user.selectedImage && user.selectedImage.trim() !== '' ? user.selectedImage : '/default-image.jpg'}
                   alt={user.name && user.name.trim() !== '' ? user.name : 'User'}
                   width={28}
