@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
-// NOTE: Run `npm install react-calendar` if not already installed.
-
 type Workout = {
   _id: string;
   date: string;
@@ -30,12 +28,12 @@ function getMonthRange(date: Date): [Date, Date] {
 export default function WorkoutsPage() {
   const [tab, setTab] = useState<'calendar' | 'exercises'>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [calendarRange, setCalendarRange] = useState<[Date, Date]>(getMonthRange(new Date()));
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
   const [logForm, setLogForm] = useState({ exerciseId: '', sets: '', reps: '', weight: '' });
-  const [calendarRange, setCalendarRange] = useState<[Date, Date]>(getMonthRange(new Date()));
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [addExerciseForm, setAddExerciseForm] = useState({ name: '', category: '', notes: '' });
   const [showEditWorkout, setShowEditWorkout] = useState(false);
@@ -45,22 +43,32 @@ export default function WorkoutsPage() {
   const [pendingDeleteExercise, setPendingDeleteExercise] = useState<Exercise | null>(null);
   const [pendingDeleteWorkout, setPendingDeleteWorkout] = useState<Workout | null>(null);
 
-  // Fetch workouts for the visible month
-  useEffect(() => {
-    const fetchWorkouts = async () => {
+  // Fetch workouts for a specific date range
+  const fetchWorkouts = async (startDate: Date, endDate: Date) => {
+    try {
       setLoading(true);
-      const start = calendarRange[0].toISOString().slice(0, 10);
-      const end = calendarRange[1].toISOString().slice(0, 10);
+      const start = startDate.toISOString().slice(0, 10);
+      const end = endDate.toISOString().slice(0, 10);
       const res = await fetch(`/api/workouts?start=${start}&end=${end}`);
       if (res.ok) {
-        setWorkouts(await res.json());
+        const data = await res.json();
+        setWorkouts(data);
       } else {
+        console.error('Failed to fetch workouts');
         setWorkouts([]);
       }
+    } catch (error) {
+      console.error('Error fetching workouts:', error);
+      setWorkouts([]);
+    } finally {
       setLoading(false);
-    };
-    fetchWorkouts();
-  }, [calendarRange]);
+    }
+  };
+
+// Fetch workouts when calendar range changes
+useEffect(() => {
+  fetchWorkouts(calendarRange[0], calendarRange[1]);
+}, [calendarRange]);
 
   // Fetch all exercises
   useEffect(() => {
@@ -77,20 +85,39 @@ export default function WorkoutsPage() {
 
   // Workouts for selected day
   const dateKey = selectedDate.toISOString().slice(0, 10);
-  const workoutsForDay = workouts.filter(w => w.date === dateKey);
+  const [workoutsForDay, setWorkoutsForDay] = useState<Workout[]>([]);
+
+  // Update workoutsForDay whenever workouts or selectedDate changes
+  useEffect(() => {
+    const dateKey = selectedDate.toISOString().slice(0, 10);
+    const filtered = workouts.filter(w => w.date.slice(0, 10) === dateKey)
+      .sort((a, b) => {
+        const aTime = new Date(a.date).getTime();
+        const bTime = new Date(b.date).getTime();
+        return bTime - aTime;
+      });
+    setWorkoutsForDay(filtered);
+  }, [workouts, selectedDate]);
 
   // Calendar markers
   const workoutDays = new Set(workouts.map(w => w.date));
 
   // Calendar onChange handler
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleCalendarChange = (value: any) => {
+  const handleCalendarChange = async (value: any) => {
+    let newDate: Date | null = null;
     if (value instanceof Date) {
-      setSelectedDate(value);
+      newDate = value;
     } else if (Array.isArray(value) && value[0] instanceof Date) {
-      setSelectedDate(value[0]);
+      newDate = value[0];
     }
-  };
+    
+    if (newDate) {
+      setSelectedDate(newDate);
+      // Always fetch fresh data for the selected date
+      fetchWorkouts(newDate, newDate);
+    }
+};
 
   // Calendar onActiveStartDateChange handler
   const handleActiveStartDateChange = ({ activeStartDate }: { activeStartDate: Date | null }) => {
@@ -111,19 +138,22 @@ export default function WorkoutsPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        date: dateKey,
+        date: new Date().toISOString(), // Full local ISO string with time
         exerciseId: logForm.exerciseId,
         sets: Number(logForm.sets),
         reps: Number(logForm.reps),
         weight: Number(logForm.weight),
       }),
     });
-    closeLogModal();
-    // Refetch workouts
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (selectedDate.toISOString().slice(0, 10) !== todayStr) {
+      setSelectedDate(new Date());
+    }
     const start = calendarRange[0].toISOString().slice(0, 10);
     const end = calendarRange[1].toISOString().slice(0, 10);
     const res = await fetch(`/api/workouts?start=${start}&end=${end}`);
     if (res.ok) setWorkouts(await res.json());
+    closeLogModal();
   };
 
   // Add Exercise modal handlers
@@ -139,12 +169,16 @@ export default function WorkoutsPage() {
     await fetch('/api/exercises', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(addExerciseForm),
+      body: JSON.stringify({ ...addExerciseForm, date: new Date().toISOString().slice(0, 10) }),
     });
-    closeAddExercise();
-    // Refetch exercises
+    // If not viewing today, switch to today so new data is visible
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (selectedDate.toISOString().slice(0, 10) !== todayStr) {
+      setSelectedDate(new Date());
+    }
     const res = await fetch('/api/exercises');
     if (res.ok) setExercises(await res.json());
+    closeAddExercise();
   };
 
   // Edit workout modal handlers
@@ -248,12 +282,17 @@ export default function WorkoutsPage() {
         name: editExercise.name,
         category: editExercise.category,
         notes: editExercise.notes,
+        date: new Date().toISOString().slice(0, 10), // Always set to today
       }),
     });
-    closeEditExercise();
-    // Refetch exercises
+    // If not viewing today, switch to today so new data is visible
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (selectedDate.toISOString().slice(0, 10) !== todayStr) {
+      setSelectedDate(new Date());
+    }
     const res = await fetch('/api/exercises');
     if (res.ok) setExercises(await res.json());
+    closeEditExercise();
   };
   const handleDeleteExercise = (exercise: Exercise) => {
     setPendingDeleteExercise(exercise);
@@ -314,36 +353,51 @@ export default function WorkoutsPage() {
                 <div className="h-24 flex items-center justify-center text-gray-400 italic">No workouts logged for this day.</div>
               ) : (
                 <ul className="mt-2 space-y-2">
-                  {workoutsForDay.map((w, i) => (
-                    <li key={w._id || i} className="border-2 border-black rounded-lg p-3 bg-white shadow-brutal flex items-center justify-between group transition-all">
-                      <div>
-                        <span className="font-bold text-base">
-                          {exercises.find(e => e._id === w.exerciseId)?.name || 'Exercise'}
-                        </span> <span className="text-gray-500">— {w.sets} sets × {w.reps} reps @ {w.weight}kg</span>
-                      </div>
-                      <div className="flex gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
-                        <button
-                          className="px-2 py-1 border-2 border-black rounded-lg bg-yellow-200 font-bold shadow-brutal hover:bg-yellow-300 transition-colors"
-                          onClick={() => openEditWorkout(w)}
-                          title="Edit"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          className="px-2 py-1 border-2 border-black rounded-lg bg-red-300 font-bold shadow-brutal hover:bg-red-400 transition-colors"
-                          onClick={() => handleDeleteWorkout(w)}
-                          title="Delete"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </li>
-                  ))}
+                  {workoutsForDay.map((w, i) => {
+                    // Extract time if available
+                    let timeStr = '';
+                    if (w.date.length > 10) {
+                      // ISO string with time
+                      const d = new Date(w.date);
+                      timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    } else {
+                      timeStr = '--:--'; // No time info
+                    }
+                    return (
+                      <li key={w._id || i} className="border-2 border-black rounded-lg p-3 bg-white shadow-brutal flex items-center justify-between group transition-all">
+                        <div>
+                          <span className="font-bold text-base">
+                            {exercises.find(e => e._id === w.exerciseId)?.name || 'Exercise'}
+                          </span>
+                          <span className="text-gray-500"> — {w.sets} sets × {w.reps} reps @ {w.weight}kg</span>
+                          <span className="ml-2 text-xs text-blue-500">{timeStr}</span>
+                        </div>
+                        <div className="flex gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                          <button
+                            className={`px-2 py-1 border-2 border-black rounded-lg bg-yellow-200 font-bold shadow-brutal hover:bg-yellow-300 transition-colors ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            onClick={() => isToday && openEditWorkout(w)}
+                            disabled={!isToday}
+                            title={!isToday ? 'You can only edit workouts for today.' : 'Edit'}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className={`px-2 py-1 border-2 border-black rounded-lg bg-red-300 font-bold shadow-brutal hover:bg-red-400 transition-colors ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            onClick={() => isToday && handleDeleteWorkout(w)}
+                            disabled={!isToday}
+                            title={!isToday ? 'You can only delete workouts for today.' : 'Delete'}
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
           </div>
-          {showEditWorkout && editWorkout && (
+          {showEditWorkout && editWorkout && isToday && (
             <div className={modalOverlay}>
               <div className={modalBox}>
                 <h3 className="text-lg font-bold mb-4">Edit Workout</h3>
@@ -446,10 +500,9 @@ export default function WorkoutsPage() {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <button
-                className={`px-4 py-2 border-2 border-black rounded-lg bg-yellow-200 font-bold shadow-brutal hover:bg-yellow-300 transition-colors ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
-                onClick={() => isToday && setShowAddExercise(true)}
-                disabled={!isToday}
-                title={!isToday ? 'You can only add exercises for today.' : 'Add Exercise'}
+                className="px-4 py-2 border-2 border-black rounded-lg bg-yellow-200 font-bold shadow-brutal hover:bg-yellow-300 transition-colors"
+                onClick={() => setShowAddExercise(true)}
+                title="Add Exercise"
               >
                 + Add Exercise
               </button>
@@ -459,43 +512,40 @@ export default function WorkoutsPage() {
                 <div key={category} className="border-2 border-black rounded-lg p-4 bg-white shadow-brutal">
                   <h3 className="font-bold mb-2">{category}</h3>
                   <ul className="flex flex-col gap-2">
-                    {exs.map((ex: Exercise) => (
-                      <li key={ex._id} className="flex items-center justify-between gap-2">
-                        <span>{ex.name}</span>
-                        <div className="flex gap-1">
-                          <button
-                            className={`px-2 py-1 border-2 border-black rounded-lg bg-blue-200 font-bold shadow-brutal hover:bg-blue-300 transition-colors ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={() => isToday && openEditExercise(ex)}
-                            disabled={!isToday}
-                            title={!isToday ? 'You can only edit exercises for today.' : 'Edit Exercise'}
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            className={`px-2 py-1 border-2 border-black rounded-lg bg-red-300 font-bold shadow-brutal hover:bg-red-400 transition-colors ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={() => isToday && handleDeleteExercise(ex)}
-                            disabled={!isToday}
-                            title={!isToday ? 'You can only delete exercises for today.' : 'Delete Exercise'}
-                          >
-                            🗑️
-                          </button>
-                          <button
-                            className={`px-2 py-1 border-2 border-black rounded-lg bg-green-200 font-bold shadow-brutal hover:bg-green-300 transition-colors ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={() => isToday && logWorkoutFromExercise(ex._id)}
-                            disabled={!isToday}
-                            title={!isToday ? 'You can only log workouts for today.' : 'Log Workout'}
-                          >
-                            ➕
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+  {exs.map((ex: Exercise) => (
+    <li key={ex._id} className="flex items-center justify-between gap-2">
+      <span>{ex.name}</span>
+      <div className="flex gap-1">
+        <button
+          className="px-2 py-1 border-2 border-black rounded-lg bg-blue-200 font-bold shadow-brutal hover:bg-blue-300 transition-colors"
+          onClick={() => openEditExercise(ex)}
+          title="Edit Exercise"
+        >
+          ✏️
+        </button>
+        <button
+          className="px-2 py-1 border-2 border-black rounded-lg bg-red-300 font-bold shadow-brutal hover:bg-red-400 transition-colors"
+          onClick={() => handleDeleteExercise(ex)}
+          title="Delete Exercise"
+        >
+          🗑️
+        </button>
+        <button
+          className="px-2 py-1 border-2 border-black rounded-lg bg-green-200 font-bold shadow-brutal hover:bg-green-300 transition-colors"
+          onClick={() => logWorkoutFromExercise(ex._id)}
+          title="Log Workout"
+        >
+          ➕
+        </button>
+      </div>
+    </li>
+  ))}
+</ul>
                 </div>
               ))}
             </div>
           </div>
-          {showAddExercise && isToday && (
+          {showAddExercise && (
             <div className={modalOverlay}>
               <div className={modalBox}>
                 <h3 className="text-lg font-bold mb-4">Add Exercise</h3>
@@ -548,7 +598,7 @@ export default function WorkoutsPage() {
               </div>
             </div>
           )}
-          {showEditExercise && isToday && editExercise && (
+          {showEditExercise && editExercise && (
             <div className={modalOverlay}>
               <div className={modalBox}>
                 <h3 className="text-lg font-bold mb-4">Edit Exercise</h3>
@@ -601,7 +651,7 @@ export default function WorkoutsPage() {
               </div>
             </div>
           )}
-          {showLogModal && isToday && (
+          {showLogModal && (
             <div className={modalOverlay}>
               <div className={modalBox}>
                 <h3 className="text-lg font-bold mb-4">Log Workout</h3>
@@ -661,7 +711,7 @@ export default function WorkoutsPage() {
               </div>
             </div>
           )}
-          {pendingDeleteExercise && isToday && (
+          {pendingDeleteExercise && (
             <div className={modalOverlay}>
               <div className={modalBox + ' max-w-xs text-center'}>
                 <h3 className="text-lg font-bold mb-4">Delete Exercise?</h3>

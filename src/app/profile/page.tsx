@@ -2,6 +2,7 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useUser } from '@/context/UserContext';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
@@ -10,6 +11,8 @@ export default function ProfilePage() {
   const [image, setImage] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   // Sync local state with user context
   useEffect(() => {
@@ -179,9 +182,18 @@ export default function ProfilePage() {
           type="button"
           className="px-4 py-2 border-2 border-black rounded-md bg-red-400 font-bold shadow-brutal hover:bg-red-600 text-white"
           disabled={saving}
-          onClick={async () => {
-            if (!window.confirm("Are you sure you want to delete your account? This cannot be undone.")) return;
-            setSaving(true);
+          onClick={() => setShowDeleteModal(true)}
+        >
+          Delete Account
+        </button>
+        <DeleteConfirmModal
+          isOpen={showDeleteModal}
+          title="Delete Account?"
+          message="Are you sure you want to delete your account? This cannot be undone."
+          confirmLabel={deletingAccount ? 'Deleting...' : 'Delete'}
+          cancelLabel="Cancel"
+          onConfirm={async () => {
+            setDeletingAccount(true);
             setMessage("");
             const res = await fetch("/api/profile", { method: "DELETE" });
             if (res.ok) {
@@ -192,11 +204,12 @@ export default function ProfilePage() {
             } else {
               setMessage("Failed to delete account.");
             }
-            setSaving(false);
+            setDeletingAccount(false);
+            setShowDeleteModal(false);
           }}
-        >
-          Delete Account
-        </button>
+          onCancel={() => setShowDeleteModal(false)}
+          loading={deletingAccount}
+        />
         {message && <div className="text-green-700 font-bold">{message}</div>}
       </form>
     </div>
