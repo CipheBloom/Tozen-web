@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
     await connectToDB();
-    const session = await getServerSession(authOptions) as { user: { email: string } };
+    const session = await getServerSession(authOptions as any) as { user: { email: string } };
 
     if (!session?.user) {
       return NextResponse.json(
@@ -62,7 +62,7 @@ export async function PATCH(
 ) {
   try {
     await connectToDB();
-    const session = await getServerSession(authOptions) as { user: { email: string } };
+    const session = await getServerSession(authOptions as any) as { user: { email: string } };
 
     if (!session) {
       return NextResponse.json(
@@ -157,7 +157,7 @@ export async function DELETE(
 ) {
   try {
     await connectToDB();
-    const session = await getServerSession(authOptions) as { user: { email: string } };
+    const session = await getServerSession(authOptions as any) as { user: { email: string } };
 
     if (!session?.user) {
       return NextResponse.json(
