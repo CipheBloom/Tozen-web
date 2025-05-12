@@ -5,10 +5,9 @@ import Todo from '@/models/Todo';
 // Connect to MongoDB
 await connectToDB();
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request) {
+  const url = new URL(request.url);
+  const id = url.pathname.split('/').pop();
   try {
     const { isCompleted } = await request.json();
     
@@ -23,7 +22,7 @@ export async function PATCH(
     const userId = 'demo-user';
 
     const todo = await Todo.findOneAndUpdate(
-      { _id: params.id, userId },
+      { _id: id, userId },
       { isCompleted },
       { new: true }
     );
@@ -45,16 +44,15 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
+  const url = new URL(request.url);
+  const id = url.pathname.split('/').pop();
   try {
     // TODO: Add user authentication
     const userId = 'demo-user';
 
     const todo = await Todo.findOneAndDelete({
-      _id: params.id,
+      _id: id,
       userId
     });
 
