@@ -1,8 +1,10 @@
 import GoogleProvider from 'next-auth/providers/google';
 import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import clientPromise from './mongodb';
-import type { Session } from 'next-auth/be';
+import type { Session } from 'next-auth/next';
 import type { JWT } from 'next-auth/jwt';
+
+const JWT_STRATEGY = "jwt" as const;
 
 export const authOptions = {
 
@@ -14,7 +16,7 @@ export const authOptions = {
   ],
   adapter: MongoDBAdapter(clientPromise),
   session: {
-    strategy: "jwt" as "jwt",
+    strategy: JWT_STRATEGY,
     },
   pages: {
     signIn: '/auth/signin',
