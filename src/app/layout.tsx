@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import './globals.css';
 import { ReactNode, useState } from 'react';
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import NextAuthSessionProvider from './SessionProvider';
 import SignInPage from './auth/signin/page';
 import { UserProvider, useUser } from '@/context/UserContext';
@@ -77,9 +77,7 @@ function AuthGate({ children }: { children: ReactNode }) {
 
 // Move the header into its own client component so it can use useUser
 function Header({ setShowAbout }: { setShowAbout: (value: boolean) => void }) {
-  const { status } = useSession();
-  const { user } = useUser();
-
+  
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b-4 border-black bg-yellow-300 shadow-brutal">
       <div className="p-2 bg-yellow-400 border-2 border-black rounded-md shadow-brutal">
