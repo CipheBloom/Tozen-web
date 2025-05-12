@@ -5,10 +5,9 @@ import { connectToDB } from '@/lib/mongoose';
 import Plan from '@/models/Plan';
 import { Types } from 'mongoose';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const id = url.pathname.split('/').pop();
   try {
     await connectToDB();
     const session = await getServerSession(authOptions) as { user: { email: string } } | null;
@@ -21,7 +20,7 @@ export async function GET(
     }
 
     const plan = await Plan.findOne({
-      _id: new Types.ObjectId(params.id),
+      _id: new Types.ObjectId(id),
       userId: session.user.email,
     }).lean();
 
@@ -56,10 +55,9 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request) {
+  const url = new URL(request.url);
+  const id = url.pathname.split('/').pop();
   try {
     await connectToDB();
     const session = await getServerSession(authOptions) as { user: { email: string } } | null;
@@ -108,7 +106,7 @@ export async function PATCH(
     };
 
     const updatedPlan = await Plan.findOneAndUpdate(
-      { _id: new Types.ObjectId(params.id), userId: session.user.email },
+      { _id: new Types.ObjectId(id), userId: session.user.email },
       updateData,
       { new: true, runValidators: true }
     ).lean();
@@ -151,10 +149,9 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
+  const url = new URL(request.url);
+  const id = url.pathname.split('/').pop();
   try {
     await connectToDB();
     const session = await getServerSession(authOptions) as { user: { email: string } } | null;
@@ -167,7 +164,7 @@ export async function DELETE(
     }
 
     const deletedPlan = await Plan.findOneAndDelete({
-      _id: new Types.ObjectId(params.id),
+      _id: new Types.ObjectId(id),
       userId: session.user.email,
     });
 
