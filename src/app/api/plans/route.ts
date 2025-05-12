@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 import { connectToDB } from '@/lib/mongoose';
 import Plan from '@/models/Plan';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/authOptions';
 
 // Connect to MongoDB
 await connectToDB();
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as { user?: { email?: string | null } } | null;
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: 'Not authenticated' },
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as { user?: { email?: string | null } } | null;
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: 'Not authenticated' },

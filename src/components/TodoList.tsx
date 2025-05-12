@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiPlus, FiTrash2, FiCircle, FiCheckCircle, FiLoader } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiCircle, FiCheckCircle } from 'react-icons/fi';
 
 interface TodoItem {
   _id: string;
@@ -17,14 +17,12 @@ export default function TodoList() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [newTodo, setNewTodo] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Load todos from API on component mount
   useEffect(() => {
     const fetchTodos = async () => {
       try {
         setIsLoading(true);
-        setError(null);
         const today = new Date().toISOString().split('T')[0];
         const response = await fetch(`/api/todos?date=${today}`);
         
@@ -36,7 +34,6 @@ export default function TodoList() {
         setTodos(data);
       } catch (err) {
         console.error('Error loading todos:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load todos');
       } finally {
         setIsLoading(false);
       }
@@ -51,7 +48,6 @@ export default function TodoList() {
     
     try {
       setIsLoading(true);
-      setError(null);
       const response = await fetch('/api/todos', {
         method: 'POST',
         headers: {
@@ -72,7 +68,6 @@ export default function TodoList() {
       setNewTodo('');
     } catch (err) {
       console.error('Error adding todo:', err);
-      setError(err instanceof Error ? err.message : 'Failed to add todo');
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +75,6 @@ export default function TodoList() {
 
   const toggleTodo = async (id: string) => {
     try {
-      setError(null);
       const todoToUpdate = todos.find(todo => todo._id === id);
       if (!todoToUpdate) return;
       
@@ -107,13 +101,11 @@ export default function TodoList() {
       );
     } catch (err) {
       console.error('Error toggling todo:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update todo');
     }
   };
 
   const deleteTodo = async (id: string) => {
     try {
-      setError(null);
       const response = await fetch(`/api/todos/${id}`, {
         method: 'DELETE',
       });
@@ -126,7 +118,6 @@ export default function TodoList() {
       setTodos(prevTodos => prevTodos.filter(todo => todo._id !== id));
     } catch (err) {
       console.error('Error deleting todo:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete todo');
     }
   };
 
@@ -163,7 +154,7 @@ export default function TodoList() {
           <button
             type="submit"
             className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-600 hover:text-black transition-colors"
-            title="Add task"
+            title={`Add task`}
           >
             <FiPlus size={20} />
           </button>

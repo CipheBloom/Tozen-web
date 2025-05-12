@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/authOptions';
 import { connectToDB } from '@/lib/mongoose';
 import Plan from '@/models/Plan';
@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
     await connectToDB();
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as { user: { email: string } };
 
     if (!session?.user) {
       return NextResponse.json(
@@ -38,7 +38,7 @@ export async function GET(
       _id: plan._id.toString(),
       scheduledTasks: Object.entries(plan.scheduledTasks).reduce((acc, [day, tasks]) => ({
         ...acc,
-        [day]: (tasks as Array<{ _id?: Types.ObjectId; time?: Date; [key: string]: any }>).map(task => ({
+        [day]: tasks.map((task: { _id?: Types.ObjectId; time?: Date; title?: string; type?: string; description?: string }) => ({
           ...task,
           _id: task._id?.toString(),
           time: task.time ? new Date(task.time).toISOString() : undefined
@@ -62,7 +62,7 @@ export async function PATCH(
 ) {
   try {
     await connectToDB();
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as { user: { email: string } };
 
     if (!session) {
       return NextResponse.json(
@@ -133,7 +133,7 @@ export async function PATCH(
       _id: updatedPlan._id.toString(),
       scheduledTasks: Object.entries(updatedPlan.scheduledTasks).reduce((acc, [day, tasks]) => ({
         ...acc,
-        [day]: (tasks as Array<{ _id?: Types.ObjectId; time?: Date; [key: string]: any }>).map(task => ({
+        [day]: (tasks as Array<{ _id?: Types.ObjectId; time?: Date; title?: string; type?: string; description?: string; [key: string]: unknown }> ).map(task => ({
           ...task,
           _id: task._id?.toString(),
           time: task.time ? new Date(task.time).toISOString() : undefined
@@ -157,7 +157,7 @@ export async function DELETE(
 ) {
   try {
     await connectToDB();
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as { user: { email: string } };
 
     if (!session?.user) {
       return NextResponse.json(

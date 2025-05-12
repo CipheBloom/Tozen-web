@@ -84,13 +84,11 @@ useEffect(() => {
   }, []);
 
   // Workouts for selected day
-  const dateKey = selectedDate.toISOString().slice(0, 10);
   const [workoutsForDay, setWorkoutsForDay] = useState<Workout[]>([]);
 
   // Update workoutsForDay whenever workouts or selectedDate changes
   useEffect(() => {
-    const dateKey = selectedDate.toISOString().slice(0, 10);
-    const filtered = workouts.filter(w => w.date.slice(0, 10) === dateKey)
+    const filtered = workouts.filter(w => w.date.slice(0, 10) === selectedDate.toISOString().slice(0, 10))
       .sort((a, b) => {
         const aTime = new Date(a.date).getTime();
         const bTime = new Date(b.date).getTime();

@@ -4,7 +4,15 @@ import clientPromise from './mongodb';
 import type { Session } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 
-export const authOptions: any = {
+interface MinimalAuthOptions {
+  providers: any[];
+  adapter: any;
+  session: any;
+  pages: any;
+  callbacks: any;
+}
+
+export const authOptions: MinimalAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

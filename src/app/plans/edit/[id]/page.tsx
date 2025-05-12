@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { FiArrowLeft, FiSave, FiPlus, FiTrash2, FiClock } from 'react-icons/fi';
 import Link from 'next/link';
-import { IPlan, IPlanBase, IPlanTaskBase, TaskType } from '@/models/Plan';
+import { IPlanBase, IPlanTaskBase, TaskType } from '@/models/Plan';
 
 type TaskFormData = {
   title: string;

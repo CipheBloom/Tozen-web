@@ -1,7 +1,6 @@
 import { IPlan } from '@/models/Plan';
 import { FiEdit2, FiTrash2, FiClock, FiCalendar, FiInfo } from 'react-icons/fi';
 import Link from 'next/link';
-import { Types } from 'mongoose';
 
 interface PlanCardProps {
   plan: IPlan;
