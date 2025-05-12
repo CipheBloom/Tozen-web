@@ -1,9 +1,10 @@
 import GoogleProvider from 'next-auth/providers/google';
 import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import clientPromise from './mongodb';
-import { AuthOptions } from 'next-auth';
+import type { Session } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
 
-export const authOptions: AuthOptions = {
+export const authOptions: any = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -18,9 +19,9 @@ export const authOptions: AuthOptions = {
     signIn: '/auth/signin',
   },
   callbacks: {
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session?.user) {
-        (session.user as any).id = token.sub || '';
+        (session.user as Record<string, unknown>).id = (token && 'sub' in token && typeof token.sub === 'string' ? token.sub : '');
       }
       return session;
     },
