@@ -5,7 +5,7 @@ import { ReactNode, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import NextAuthSessionProvider from './SessionProvider';
 import SignInPage from './auth/signin/page';
-import { UserProvider, useUser } from '@/context/UserContext';
+import { UserProvider } from '@/context/UserContext';
 import HeaderMenu from './HeaderMenu';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
