@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/authOptions';
 import { connectToDB } from '@/lib/mongoose';
@@ -10,9 +11,9 @@ export async function GET(request: Request) {
   const id = url.pathname.split('/').pop();
   try {
     await connectToDB();
-    const session = await getServerSession(authOptions) as { user: { email: string } } | null;
+    const session: Session | null = await getServerSession(authOptions);
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'You must be logged in to view this plan.' },
         { status: 401 }
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
 
     const plan = await Plan.findOne({
       _id: new Types.ObjectId(id),
-      userId: session.user.email,
+      userId: session.user.id,
     }).lean();
 
     if (!plan) {
@@ -60,7 +61,7 @@ export async function PATCH(request: Request) {
   const id = url.pathname.split('/').pop();
   try {
     await connectToDB();
-    const session = await getServerSession(authOptions) as { user: { email: string } } | null;
+    const session: Session | null = await getServerSession(authOptions);
 
     if (!session) {
       return NextResponse.json(
@@ -106,7 +107,7 @@ export async function PATCH(request: Request) {
     };
 
     const updatedPlan = await Plan.findOneAndUpdate(
-      { _id: new Types.ObjectId(id), userId: session.user.email },
+      { _id: new Types.ObjectId(id), userId: session.user.id },
       updateData,
       { new: true, runValidators: true }
     ).lean();
@@ -154,9 +155,9 @@ export async function DELETE(request: Request) {
   const id = url.pathname.split('/').pop();
   try {
     await connectToDB();
-    const session = await getServerSession(authOptions) as { user: { email: string } } | null;
+    const session: Session | null = await getServerSession(authOptions);
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'You must be logged in to delete this plan.' },
         { status: 401 }
@@ -165,7 +166,7 @@ export async function DELETE(request: Request) {
 
     const deletedPlan = await Plan.findOneAndDelete({
       _id: new Types.ObjectId(id),
-      userId: session.user.email,
+      userId: session.user.id,
     });
 
     if (!deletedPlan) {

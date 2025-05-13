@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
 import { connectToDB } from '@/lib/mongoose';
 import Plan from '@/models/Plan';
 import { getServerSession } from 'next-auth/next';
@@ -9,15 +10,15 @@ await connectToDB();
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions) as { user?: { email?: string | null } } | null;
-    if (!session?.user?.email) {
+    const session: Session | null = await getServerSession(authOptions);
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
       );
     }
 
-    const plans = await Plan.find({ userId: session.user.email }).lean();
+    const plans = await Plan.find({ userId: session.user.id }).lean();
     // Convert ObjectId to string for the client
     const serializedPlans = plans.map(plan => ({
       ...plan,
@@ -43,8 +44,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions) as { user?: { email?: string | null } } | null;
-    if (!session?.user?.email) {
+    const session: Session | null = await getServerSession(authOptions);
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     
     const newPlan = new Plan({
       ...body,
-      userId: session.user.email,
+      userId: session.user.id,
       scheduledTasks: {
         Monday: [],
         Tuesday: [],

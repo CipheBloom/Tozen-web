@@ -1,16 +1,17 @@
-import { getServerSession } from "next-auth";
+import { getServerSession } from 'next-auth/next';
+import type { Session } from 'next-auth';
 import { authOptions } from "@/lib/authOptions";
 import clientPromise from "@/lib/mongodb";
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
+  const session: Session | null = await getServerSession(authOptions);
+  if (!session?.user?.id) {
     return new Response("Unauthorized", { status: 401 });
   }
   const { action, image, name } = await req.json();
   const client = await clientPromise;
   const db = client.db();
-  const user = await db.collection("users").findOne({ email: session.user.email });
+  const user = await db.collection("users").findOne({ userId: session.user.id });
 
   // Ensure images array exists
   let images: string[] = Array.isArray(user?.images) ? user.images : [];
@@ -27,18 +28,18 @@ export async function POST(req: Request) {
   } else if (action === 'updateName' && name) {
     // Optional: update name
     await db.collection("users").updateOne(
-      { email: session.user.email },
+      { userId: session.user.id },
       { $set: { name } }
     );
   }
 
   await db.collection("users").updateOne(
-    { email: session.user.email },
+    { userId: session.user.id },
     { $set: { images, selectedImage } }
   );
 
   // Fetch and return the updated user
-  const updatedUser = await db.collection("users").findOne({ email: session.user.email });
+  const updatedUser = await db.collection("users").findOne({ userId: session.user.id });
   return new Response(JSON.stringify(updatedUser), { status: 200, headers: { "Content-Type": "application/json" } });
 }
 
@@ -56,13 +57,13 @@ export async function GET(req: Request) {
 }
 
 export async function DELETE() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
+  const session: Session | null = await getServerSession(authOptions);
+  if (!session?.user?.id) {
     return new Response("Unauthorized", { status: 401 });
   }
   const client = await clientPromise;
   const db = client.db();
-  await db.collection("users").deleteOne({ email: session.user.email });
+  await db.collection("users").deleteOne({ userId: session.user.id });
   // Optionally, delete other user-related data from other collections here
   return new Response("Deleted", { status: 200 });
 }
